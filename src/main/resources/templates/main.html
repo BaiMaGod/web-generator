@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+    <title>网站制作助手-白马46</title>
+    <link rel="icon" type="image/png" href="http://148.70.0.26:8080/ApeHouse/statics/images/ape-icon.png"/>
+
+    <link rel="stylesheet" href="/frame/layui/css/layui.css"  media="all">
+
+</head>
+<body>
+    <!-- 头部 -->
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+        <legend>请选择你想要制作的网站模块和功能</legend>
+    </fieldset>
+
+    <!-- 模块功能树形组件 -->
+    <div id="test12" class="demo-tree-more"></div>
+
+    <div class="layui-btn-container" style="position:fixed;bottom: 50px;left: 50px">
+        <button type="button" class="layui-btn layui-btn-sm" lay-demo="getChecked">提交</button>
+        <button type="button" class="layui-btn layui-btn-sm" lay-demo="reload">清空重选</button>
+    </div>
+
+
+    <!--  -->
+    <script src="/frame/layui/layui.js" charset="utf-8"></script>
+    <!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+    <script>
+        layui.use(['tree', 'util'], function(){
+            var tree = layui.tree
+                ,layer = layui.layer
+                ,util = layui.util
+                ,$ = layui.jquery
+                ,moduleData = null
+                //模拟数据
+                ,data = getModuleData();
+
+
+            function getModuleData() {
+                var settings = {
+                    "async": true,
+                    "crossDomain": true,
+                    "url": "http://localhost:9999/json/module/listAll",
+                    "method": "GET"
+                }
+                var resData = [];
+                $.ajax(settings).done(function (response) {
+                    if(response.code==0){
+                        response = response.data;
+                        moduleData = response;
+                    }
+                    // console.log(response);
+
+                    for ( var i = 0; i < response.length; i++){
+                        var responseItem = response[i];
+                        // console.log("responseItem:");
+                        // console.log(responseItem);
+
+                        var dataItem1 = treeData(responseItem);  // 一级模块
+                        dataItem1.spread = true;
+                        dataItem1.children = [];
+
+                        var molds = responseItem.childMold;
+                        for ( var j = 0; j < molds.length; j++){
+                            var moldItem = molds[j];
+
+                            var dataItem2 = treeData(moldItem);  // 二级功能
+                            dataItem2.spread = true;
+                            dataItem2.children = [];
+
+                            var methods = moldItem.childMethod;
+                            for (var k = 0; k < methods.length; k++) {
+                                var methodItem = methods[k];
+
+                                var dataItem3 = treeData(methodItem);    // 三级功能
+
+                                dataItem2.children.push(dataItem3);
+                            }
+
+                            dataItem1.children.push(dataItem2);
+                        }
+
+                        resData.push(dataItem1);
+                    }
+
+
+                    //基本演示
+                    tree.render({
+                        elem: '#test12'
+                        ,data: resData //getModuleData()
+                        ,showCheckbox: true  //是否显示复选框
+                        ,id: 'demoId1'
+                        ,isJump: true // 是否允许点击节点时弹出新窗口跳转
+                        ,click: function(obj){
+                            var data = obj.data;  // 获取当前点击的节点数据
+                            layer.msg('状态：'+ obj.state + '<br>节点数据：' + JSON.stringify(data));
+                            // console.log("data");
+                            // console.log(data);
+                        }
+                    });
+                });
+
+                return resData;
+            }
+
+            function treeData(module){
+                // console.log(module);
+                var dataItem = new Object();
+
+                dataItem.title = module.nameHan;
+                dataItem.id	 = module.path;
+                dataItem.field = 'user';
+
+                return dataItem;
+            }
+
+
+            //按钮事件
+            util.event('lay-demo', {
+                getChecked: function(othis){
+                    var checkedData = tree.getChecked('demoId1'); //    获取选中节点的数据
+
+                    // layer.alert(JSON.stringify(checkedData), {shade:0});
+                    // console.log("checkedData");
+                    // console.log(checkedData);
+
+                    // 组装模块路径
+                    // var paths = JSON.stringify(getModulePaths(checkedData)).replace("\"","").replace("\"","");
+                    var paths = getModulePaths(checkedData);
+                    // 提交
+                    submitOrder(paths);
+                }
+                ,setChecked: function(){
+                    tree.setChecked('demoId1', [12, 16]); //勾选指定节点
+                }
+                ,reload: function(){
+                    //重载实例
+                    tree.reload('demoId1', {
+
+                    });
+
+                }
+            });
+
+            function getModulePaths(checkedData) {
+                console.log("checkedData");
+                console.log(checkedData);
+                var paths="";
+                for (var i = 0; i < checkedData.length; i++) {
+                    var dataItem1 = checkedData[i];     // 一级
+
+                    var child1 = dataItem1.children;
+                    for (var j = 0; j < child1.length; j++) {
+                        var dataItem2 = child1[j];     // 二级
+
+                        var child2 = dataItem2.children;
+                        for (var k = 0; k < child2.length; k++) {
+                            var dataItem3 = child2[k];     // 三级
+
+                            paths += ","+dataItem3.id;
+                            console.log(dataItem3);
+                            console.log("path:"+dataItem3.id);
+                        }
+                    }
+                }
+
+                if(paths.charAt(0)==','){
+                    paths = paths.substring(1);
+                }
+
+                return paths;
+            }
+
+            function submitOrder(paths) {
+                var form = new FormData();
+                form.append("modulePaths", paths);
+
+                var settings = {
+                    "async": true,
+                    "crossDomain": true,
+                    "url": "http://localhost:9999/json/create/web",
+                    "method": "POST",
+                    "processData": false,
+                    "contentType": false,
+                    "mimeType": "multipart/form-data",
+                    "data": form
+                }
+
+                $.ajax(settings).done(function (response) {
+                    response = JSON.parse(response);
+                    console.log(response);
+                    if(response.code == 0){
+                        layer.msg(" 提交成功 ");
+                    }else {
+                        layer.msg("1"+JSON.stringify(response.msg));
+                    }
+                });
+
+            }
+
+
+        });
+    </script>
+</body>
+</html>
