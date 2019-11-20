@@ -59,7 +59,7 @@ public class CreateServiceImpl implements CreateService {
         }
         File createFolder = new File(form.getCreatePath());
         if(!createFolder.exists()){
-            if(!createFolder.mkdir()){
+            if(!createFolder.mkdirs()){
                 return Result.fail(ResultStatus.ERROR_Mkdir);
             }
         }
@@ -68,7 +68,7 @@ public class CreateServiceImpl implements CreateService {
         while (projectRootFolder.exists()){
             projectRootFolder = new File(form.getCreatePath()+"\\"+form.getProjectName()+"("+(i++)+")");
         }
-        if(!projectRootFolder.mkdir()){
+        if(!projectRootFolder.mkdirs()){
             return Result.fail(ResultStatus.ERROR_Mkdir);
         }
 
@@ -291,23 +291,23 @@ public class CreateServiceImpl implements CreateService {
     private void copyJavaShell(Mold mold,String packagePath,File javaFile,File projectRootFolder){
         System.out.println("正在生成功能["+mold.getPath()+"]基础 java 代码 ["+packagePath+javaFile.getName()+"]类外壳...");
 
-        try {
-            // 如果 该类 在项目中不存在，则生成类外壳
-            if(!projectJavaHave(mold,packagePath,javaFile.getName(),projectRootFolder)){
-                String classShellText = "";
-                if(javaFile.getName().indexOf("Service.java")>0 || javaFile.getName().indexOf("Mapper.java")>0){
-                    classShellText = JavaMethodUtil.getInterfaceShellText(javaFile.getAbsolutePath());
-                }else{
-                    classShellText = JavaMethodUtil.getClassShellText(javaFile.getAbsolutePath());
-                }
-
-                String targetFilePath = projectRootFolder.getAbsolutePath() + "\\" + projectJavaMidPath+packagePath+javaFile.getName();
-                File targetFile = new File(targetFilePath);
-                targetFile.createNewFile();
-                cn.hutool.core.io.FileUtil.writeString(classShellText,targetFile,"UTF-8");
+        // 如果 该类 在项目中不存在，则生成类外壳
+        if(!projectJavaHave(mold,packagePath,javaFile.getName(),projectRootFolder)){
+            String classShellText = "";
+            if(javaFile.getName().indexOf("Service.java")>0 || javaFile.getName().indexOf("Mapper.java")>0){
+                classShellText = JavaMethodUtil.getInterfaceShellText(javaFile.getAbsolutePath());
+            }else{
+                classShellText = JavaMethodUtil.getClassShellText(javaFile.getAbsolutePath());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            String targetFileFolder = projectRootFolder.getAbsolutePath() + "\\" + projectJavaMidPath+packagePath;
+            String targetFilePath = targetFileFolder + javaFile.getName();
+
+            File targetFile = new File(targetFilePath);
+
+            cn.hutool.core.io.FileUtil.touch(targetFilePath);
+//                targetFile.createNewFile();
+            cn.hutool.core.io.FileUtil.writeString(classShellText,targetFile,"UTF-8");
         }
 
         System.out.println("功能["+mold.getPath()+"]基础 java 代码 ["+packagePath+javaFile.getName()+"]类外壳 生成成功");
