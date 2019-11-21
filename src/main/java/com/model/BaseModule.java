@@ -13,7 +13,7 @@ public class BaseModule {
     protected String tag;    // 模块标签
     protected String description;    // 模块描述
 
-
+    protected String sql;    // sql建表语句
 
     protected double lowPrice;   // 功能最底价格
     protected double highPrice;   // 功能最高价格

@@ -44,6 +44,9 @@ public class XMLUtil {
             module.setNameHan(XmlUtil.elementText(info, "nameHan"));
             module.setDescription(XmlUtil.elementText(info, "description"));
             module.setTag(XmlUtil.elementText(info, "tag"));
+
+            module.setSql(XmlUtil.elementText(rootElement, "sql"));
+
             module.setLowPrice(Double.parseDouble(XmlUtil.elementText(info, "lowPrice")));
             module.setHighPrice(Double.parseDouble(XmlUtil.elementText(info, "highPrice")));
             module.setLowHour(Integer.parseInt(XmlUtil.elementText(info, "lowHour")));
@@ -107,6 +110,9 @@ public class XMLUtil {
         mold.setNameHan(XmlUtil.elementText(info, "nameHan"));
         mold.setDescription(XmlUtil.elementText(info, "description"));
         mold.setTag(XmlUtil.elementText(info, "tag"));
+
+        mold.setSql(XmlUtil.elementText(rootElement, "sql"));
+
         mold.setLowPrice(Double.parseDouble(XmlUtil.elementText(info, "lowPrice")));
         mold.setHighPrice(Double.parseDouble(XmlUtil.elementText(info, "highPrice")));
         mold.setLowHour(Integer.parseInt(XmlUtil.elementText(info, "lowHour")));

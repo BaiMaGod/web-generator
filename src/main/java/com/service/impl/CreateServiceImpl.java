@@ -5,6 +5,7 @@ import com.form.CreateForm;
 import com.mapper.CreateMapper;
 import com.mapper.MethodMapper;
 import com.mapper.ModuleMapper;
+import com.mapper.SqlMapper;
 import com.model.Method;
 import com.model.Module;
 import com.model.Mold;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +43,8 @@ public class CreateServiceImpl implements CreateService {
     ModuleMapper moduleMapper;
     @Autowired
     MethodMapper methodMapper;
+    @Autowired
+    SqlMapper sqlMapper;
 
 
     @Override
@@ -134,6 +136,9 @@ public class CreateServiceImpl implements CreateService {
         if(module==null) return;
         System.out.println("正在生成模块["+module.getName()+"]基础代码...");
 
+        // 生成 模块基础 sql建表语句
+        sqlMapper.addSqlToFile(projectRootFolder.getAbsolutePath(),module.getSql());
+
         // 添加模块基础 java 代码
         addModuleBaseJava(module,projectRootFolder);
 
@@ -197,7 +202,7 @@ public class CreateServiceImpl implements CreateService {
         if(mold==null) return;
         System.out.println("正在生成功能["+mold.getPath()+"]...");
 
-        // 添加 功能基础代码（仅类）
+        // 添加 功能基础 代码（仅类）
         addMoldBase(mold,projectRootFolder);
 
         // 添加 功能各个方法 代码
@@ -216,6 +221,9 @@ public class CreateServiceImpl implements CreateService {
     private void addMoldBase(Mold mold, File projectRootFolder) {
         if(mold==null) return;
         System.out.println("正在生成功能["+mold.getPath()+"]基础代码...");
+
+        // 生成 功能基础 sql建表语句
+        sqlMapper.addSqlToFile(projectRootFolder.getAbsolutePath(),mold.getSql());
 
         // 添加 功能基础代码
         addModuleBase(moduleMapper.getModuleByPath(mold.getModuleName()),projectRootFolder);
@@ -251,9 +259,13 @@ public class CreateServiceImpl implements CreateService {
                 if(package1.getName().equals("config")){
                     FolderUtil.copyFolderContent(package1.getAbsolutePath(),destJavaComPath,false);
                 }
+                // mapper 包下的类直接复制
+                else if(package1.getName().equals("mapper")){
+                    FolderUtil.copyFolderContent(package1.getAbsolutePath(),destJavaComPath,false);
+                }
                 // model 包下的类直接复制
                 else if(package1.getName().equals("model")){
-                    FolderUtil.copyFolderContent(package1.getAbsolutePath(),destPath,false);
+                    FolderUtil.copyFolderContent(package1.getAbsolutePath(),destJavaComPath,false);
                 }
                 // utils 包下的类直接复制
                 else if(package1.getName().equals("utils")){
@@ -342,7 +354,7 @@ public class CreateServiceImpl implements CreateService {
         System.out.println("正在生成 功能["+mold.getName()+"] resource 代码...");
 
         // 首先获取 功能 基础代码模板 resource 目录对象
-        File moldBaseJavaFolder = new File(rootPath+"\\"+mold.getModuleName()+"\\"+mold.getPath()+"\\resources");
+        File moldBaseJavaFolder = new File(rootPath+"\\"+mold.getModuleName()+"\\"+mold.getName()+"\\resources");
         // 判断是否存在模板代码,如存在则复制
         if(moldBaseJavaFolder.exists()){
             // 将java目录下的所有文件 复制到 项目对应的目录 下的 模块文件夹中
@@ -566,9 +578,9 @@ public class CreateServiceImpl implements CreateService {
     List<Method> getClassAllMethodText(Method method){
         List<Method> methods = new ArrayList<>();
         methods.add(method);
-        Method method1 = new Method();
-        method1.setName(StringUtils.capitalize(method.getName()));
-        methods.add(method1);
+//        Method method1 = new Method();
+//        method1.setName(StringUtils.capitalize(method.getName()));
+//        methods.add(method1);
 
         return methods;
     }
