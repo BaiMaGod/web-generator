@@ -12,6 +12,45 @@
 
     <link rel="stylesheet" href="/frame/layui/css/layui.css"  media="all">
 
+    <style>
+        /*滚动条*/
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-button,
+        ::-webkit-scrollbar-button:vertical {
+            display: none;
+        }
+
+        ::-webkit-scrollbar-track,
+        ::-webkit-scrollbar-track:vertical {
+            background-color: white;
+        }
+
+        ::-webkit-scrollbar-track-piece {
+            background-color: white;
+        }
+
+        ::-webkit-scrollbar-thumb,
+        ::-webkit-scrollbar-thumb:vertical {
+            border-radius: 5px;
+            margin-right: 10px;
+            background-color: #bba;
+
+        }
+
+        ::-webkit-scrollbar-thumb:hover,
+        ::-webkit-scrollbar-thumb:vertical:hover {
+            /*background-color: #aaa;*/
+            background-color: white;
+        }
+
+        ::-webkit-scrollbar-corner,
+        ::-webkit-scrollbar-corner:vertical {
+            background-color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- 头部 -->
@@ -20,11 +59,55 @@
     </fieldset>
 
     <!-- 模块功能树形组件 -->
-    <div id="test12" class="demo-tree-more"></div>
+    <div id="test12" class="demo-tree-more" style="overflow-y:scroll;height: 600px;width: 400px;margin-left: 100px"></div>
 
-    <div class="layui-btn-container" style="position:fixed;bottom: 50px;left: 50px">
-        <button type="button" class="layui-btn layui-btn-sm" lay-demo="getChecked">提交</button>
+    <div id="module-info" style="position:fixed;top: 100px;left: 600px">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">功能名称：</label>
+            <div id="nameHan" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: large;"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">标签：</label>
+            <div id="tag" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: large;"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">描述：</label>
+            <div id="description" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: large;"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">预计耗时：</label>
+            <div id="hour" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: medium;"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">估价：</label>
+            <div id="price" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: medium;"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">上线时间：</label>
+            <div id="onlineTime" class="layui-form-mid layui-word-aux" style="font-weight: 800;font-size: medium;"></div>
+        </div>
+    </div>
+
+    <form class="layui-form layui-fluid" action="" style="position:fixed;bottom: 50px;right: 360px">
+        <div class="layui-input-inline">
+            <select name="baseProject" lay-verify="required">
+                <option value="" >选择项目框架</option>
+                <option value="project" selected>SpringBoot+Mybatis</option>
+                <option value="SSH">Spring+SpringMvc+Hibernate</option>
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="projectName" name="projectName"  placeholder="输入项目名称(选填)" class="layui-input">
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="projectPath" name="projectName"  placeholder="输入项目生成目录(选填)" class="layui-input">
+        </div>
+    </form>
+    <div class="layui-btn-container" style="position:fixed;bottom: 45px;right: 50px">
         <button type="button" class="layui-btn layui-btn-sm" lay-demo="reload">清空重选</button>
+        <button type="button" class="layui-btn layui-btn-sm" lay-demo="submitOrder">生成新项目</button>
+        <button type="button" class="layui-btn layui-btn-sm" lay-demo="submitAdd">添加到已有项目</button>
     </div>
 
 
@@ -38,6 +121,7 @@
                 ,util = layui.util
                 ,$ = layui.jquery
                 ,moduleData = null
+                ,moduleMap = {}
                 //模拟数据
                 ,data = getModuleData();
 
@@ -59,6 +143,7 @@
 
                     for ( var i = 0; i < response.length; i++){
                         var responseItem = response[i];
+                        moduleMap[responseItem.path] = responseItem;
                         // console.log("responseItem:");
                         // console.log(responseItem);
 
@@ -69,6 +154,7 @@
                         var molds = responseItem.childMold;
                         for ( var j = 0; j < molds.length; j++){
                             var moldItem = molds[j];
+                            moduleMap[moldItem.path] = moldItem;
 
                             var dataItem2 = treeData(moldItem);  // 二级功能
                             dataItem2.spread = true;
@@ -77,6 +163,7 @@
                             var methods = moldItem.childMethod;
                             for (var k = 0; k < methods.length; k++) {
                                 var methodItem = methods[k];
+                                moduleMap[methodItem.path] = methodItem;
 
                                 var dataItem3 = treeData(methodItem);    // 三级功能
 
@@ -99,14 +186,36 @@
                         ,isJump: true // 是否允许点击节点时弹出新窗口跳转
                         ,click: function(obj){
                             var data = obj.data;  // 获取当前点击的节点数据
-                            layer.msg('状态：'+ obj.state + '<br>节点数据：' + JSON.stringify(data));
-                            // console.log("data");
-                            // console.log(data);
+                            // layer.msg('状态：'+ obj.state + '<br>节点数据：' + JSON.stringify(data));
+
+                            // console.log(moduleMap);
+                            // console.log(data.id);
+
+                            $('#module-info').append(addModuleInfo(moduleMap[data.id]));
                         }
                     });
                 });
 
                 return resData;
+            }
+
+            function addModuleInfo(module) {
+                $('#nameHan').text(module.nameHan);
+                $('#tag').text(module.tag);
+                $('#description').text(module.description);
+                if(module.highHour==0){
+                    $('#hour').text(module.lowHour + " （小时）");
+                }else{
+                    $('#hour').text(module.lowHour + " ~ " + module.highHour + " （小时）");
+                }
+                if(module.highPrice==0){
+                    $('#price').text(module.lowPrice + " （元）");
+                }else{
+                    $('#price').text(module.lowPrice + " ~ " + module.highPrice + " （元）");
+                }
+                $('#onlineTime').text(module.onlineTime);
+
+                return undefined;
             }
 
             function treeData(module){
@@ -123,18 +232,17 @@
 
             //按钮事件
             util.event('lay-demo', {
-                getChecked: function(othis){
-                    var checkedData = tree.getChecked('demoId1'); //    获取选中节点的数据
+                submitOrder: function(){
+                    var form = getFormData();
 
-                    // layer.alert(JSON.stringify(checkedData), {shade:0});
-                    // console.log("checkedData");
-                    // console.log(checkedData);
+                    // 提交生成
+                    submitOrder(form);
+                },
+                submitAdd: function(){
+                    var form = getFormData();
 
-                    // 组装模块路径
-                    // var paths = JSON.stringify(getModulePaths(checkedData)).replace("\"","").replace("\"","");
-                    var paths = getModulePaths(checkedData);
-                    // 提交
-                    submitOrder(paths);
+                    // 提交生成
+                    submitAdd(form);
                 }
                 ,setChecked: function(){
                     tree.setChecked('demoId1', [12, 16]); //勾选指定节点
@@ -149,24 +257,42 @@
             });
 
             function getModulePaths(checkedData) {
-                console.log("checkedData");
-                console.log(checkedData);
+                // console.log("checkedData");
+                // console.log(checkedData);
                 var paths="";
+                var tempPath = "";
                 for (var i = 0; i < checkedData.length; i++) {
                     var dataItem1 = checkedData[i];     // 一级
 
+                    // 如果全选
+                    var fullFlag = true;
                     var child1 = dataItem1.children;
                     for (var j = 0; j < child1.length; j++) {
                         var dataItem2 = child1[j];     // 二级
 
-                        var child2 = dataItem2.children;
-                        for (var k = 0; k < child2.length; k++) {
-                            var dataItem3 = child2[k];     // 三级
+                        // 如果全选
+                        if(dataItem2.children.length == moduleMap[dataItem2.id].childMethod.length){
+                            // console.log(dataItem2);
+                            // console.log(moduleMap[dataItem2.id]);
+                            tempPath += ","+dataItem2.id;
+                        }else{
+                            fullFlag = false;
+                            var child2 = dataItem2.children;
+                            for (var k = 0; k < child2.length; k++) {
+                                var dataItem3 = child2[k];     // 三级
 
-                            paths += ","+dataItem3.id;
-                            console.log(dataItem3);
-                            console.log("path:"+dataItem3.id);
+                                tempPath += ","+dataItem3.id;
+                                // console.log(dataItem3);
+                                // console.log("path:"+dataItem3.id);
+                            }
                         }
+                    }
+
+                    // 如果二级都全选
+                    if(fullFlag && dataItem1.children.length == moduleMap[dataItem1.id].childMold.length){
+                        paths += ","+dataItem1.id;
+                    }else{
+                        paths += tempPath;
                     }
                 }
 
@@ -177,10 +303,37 @@
                 return paths;
             }
 
-            function submitOrder(paths) {
+            function getFormData() {
+                var checkedData = tree.getChecked('demoId1'); //    获取选中节点的数据
+
                 var form = new FormData();
+
+                // 组装模块路径
+                // var paths = JSON.stringify(getModulePaths(checkedData)).replace("\"","").replace("\"","");
+                var paths = getModulePaths(checkedData);
+                // 项目框架
+                var baseProject = $('#baseProject').val();
+                // 项目名字
+                var projectName = $('#projectName').val();
+                // 项目目录
+                var projectPath = $('#projectPath').val();
+
                 form.append("modulePaths", paths);
 
+                if(baseProject!=null && baseProject!='')
+                    form.append("baseProject", baseProject);
+
+                if(projectName!=null && projectName!='')
+                    form.append("projectName", projectName);
+
+                if(projectPath!=null && projectPath!='')
+                    form.append("projectPath", projectPath);
+
+                return form;
+            }
+
+
+            function submitOrder(form) {
                 var settings = {
                     "async": true,
                     "crossDomain": true,
@@ -194,7 +347,7 @@
 
                 $.ajax(settings).done(function (response) {
                     response = JSON.parse(response);
-                    console.log(response);
+                    // console.log(response);
                     if(response.code == 0){
                         layer.msg(" 提交成功 ");
                     }else {
@@ -204,6 +357,29 @@
 
             }
 
+            function submitAdd(form) {
+                var settings = {
+                    "async": true,
+                    "crossDomain": true,
+                    "url": "http://localhost:9999/json/create/add",
+                    "method": "POST",
+                    "processData": false,
+                    "contentType": false,
+                    "mimeType": "multipart/form-data",
+                    "data": form
+                }
+
+                $.ajax(settings).done(function (response) {
+                    response = JSON.parse(response);
+                    // console.log(response);
+                    if(response.code == 0){
+                        layer.msg(" 提交成功 ");
+                    }else {
+                        layer.msg("1"+JSON.stringify(response.msg));
+                    }
+                });
+
+            }
 
         });
     </script>

@@ -7,4 +7,5 @@ public interface CreateService {
     Result base(CreateForm.BaseForm form);
 
     Result web(CreateForm.WebForm form);
+
 }

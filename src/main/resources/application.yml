@@ -17,7 +17,7 @@ spring:
       additional-paths: src/main/java
 
   datasource:
-    url: jdbc:mysql://localhost:3306/base_user?serverTimezone=Hongkong&useSSL=false
+    url: jdbc:mysql://localhost:3306/web_generator?serverTimezone=Hongkong&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: qwertyuiop123.
@@ -39,7 +39,7 @@ moduleConfig:
   # 模块根目录
   rootPath: D:\E\ideaProject\module
   # 项目基础框架目录
-  projectBasePath: D:\E\ideaProject\project
+  projectBasePath: D:\E\ideaProject\
   # 生成项目的java代码中间路径
   javaMidPath: src\main\java\com
   # 生成项目的resources代码中间路径

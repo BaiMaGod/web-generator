@@ -56,19 +56,19 @@ public class CreateServiceImpl implements CreateService {
     @Override
     public Result web(CreateForm.WebForm form) {
         // 首先判断目标文件夹是否存在，能不能创建
-        if(StringUtils.isEmpty(form.getCreatePath())){
+        if(StringUtils.isEmpty(form.getProjectPath())){
             return Result.fail(ResultStatus.ERROR_Mkdir);
         }
-        File createFolder = new File(form.getCreatePath());
+        File createFolder = new File(form.getProjectPath());
         if(!createFolder.exists()){
             if(!createFolder.mkdirs()){
                 return Result.fail(ResultStatus.ERROR_Mkdir);
             }
         }
-        File projectRootFolder = new File(form.getCreatePath()+"\\"+form.getProjectName());
+        File projectRootFolder = new File(form.getProjectPath()+"\\"+form.getProjectName());
         int i = 1;
         while (projectRootFolder.exists()){
-            projectRootFolder = new File(form.getCreatePath()+"\\"+form.getProjectName()+"("+(i++)+")");
+            projectRootFolder = new File(form.getProjectPath()+"\\"+form.getProjectName()+"("+(i++)+")");
         }
         if(!projectRootFolder.mkdirs()){
             return Result.fail(ResultStatus.ERROR_Mkdir);
@@ -76,7 +76,7 @@ public class CreateServiceImpl implements CreateService {
 
         // 接着生成 web项目 基础框架
         System.out.println("正在生成web项目基础框架...");
-        FolderUtil.copyFolderContent(projectBasePath,projectRootFolder.getAbsolutePath(), true); // 复制文件夹下的所有文件
+        FolderUtil.copyFolderContent(projectBasePath + form.getBaseProject(),projectRootFolder.getAbsolutePath(), true); // 复制文件夹下的所有文件
         System.out.println("生成成功");
 
         if(form.getModulePaths() == null){
@@ -96,13 +96,16 @@ public class CreateServiceImpl implements CreateService {
 
                     break;
                 case 2 :
-
-                    addMold(moduleMapper.getMoldByPath(modulePath),projectRootFolder);
+                    Mold mold = moduleMapper.getMoldByPath(modulePath);
+                    addModuleBase(moduleMapper.getModuleByPath(mold.getModuleName()),projectRootFolder);
+                    addMold(mold,projectRootFolder);
 
                     break;
                 case 3 :
-
-                    addMethod(moduleMapper.getMethodByPath(modulePath),projectRootFolder);
+                    Method method = moduleMapper.getMethodByPath(modulePath);
+                    addModuleBase(moduleMapper.getModuleByPath(method.getModuleName()),projectRootFolder);
+                    addMoldBase(moduleMapper.getMoldByPath(method.getModuleName()+"\\"+method.getMoldName()),projectRootFolder);
+                    addMethod(method,projectRootFolder);
 
                     break;
             }
@@ -112,12 +115,13 @@ public class CreateServiceImpl implements CreateService {
     }
 
 
+
     /**
      * 添加单个模块到指定项目（模块包含的所有功能方法）
      * @param module
      * @param projectRootFolder
      */
-    private void addModule(Module module, File projectRootFolder) {
+    public void addModule(Module module, File projectRootFolder) {
         if(module==null) return;
         System.out.println("正在生成模块["+module.getName()+"]...");
 
@@ -198,7 +202,7 @@ public class CreateServiceImpl implements CreateService {
      * @param mold
      * @param projectRootFolder
      */
-    private void addMold(Mold mold, File projectRootFolder) {
+    public void addMold(Mold mold, File projectRootFolder) {
         if(mold==null) return;
         System.out.println("正在生成功能["+mold.getPath()+"]...");
 
@@ -225,8 +229,8 @@ public class CreateServiceImpl implements CreateService {
         // 生成 功能基础 sql建表语句
         sqlMapper.addSqlToFile(projectRootFolder.getAbsolutePath(),mold.getSql());
 
-        // 添加 功能基础代码
-        addModuleBase(moduleMapper.getModuleByPath(mold.getModuleName()),projectRootFolder);
+        // 添加 模块基础代码
+//        addModuleBase(moduleMapper.getModuleByPath(mold.getModuleName()),projectRootFolder);
 
         // 添加功能 java基础 代码
         addMoldBaseJava(mold,projectRootFolder);
@@ -370,12 +374,12 @@ public class CreateServiceImpl implements CreateService {
      * @param method
      * @param projectRootFolder
      */
-    private void addMethod(Method method, File projectRootFolder) {
+    public void addMethod(Method method, File projectRootFolder) {
         if(method==null) return;
         System.out.println("正在生成方法["+method.getPath()+"]...");
 
         // 添加 功能基础代码
-        addMoldBase(moduleMapper.getMoldByPath(method.getModuleName()+"\\"+method.getMoldName()),projectRootFolder);
+//        addMoldBase(moduleMapper.getMoldByPath(method.getModuleName()+"\\"+method.getMoldName()),projectRootFolder);
 
         // 添加 方法 java代码
         addMethodJava(method,projectRootFolder);
