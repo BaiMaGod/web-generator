@@ -75,6 +75,12 @@ public class Result<T> {
         return result;
     }
 
+    public static <T>Result<T> fail(ResultStatus status) {
+        Result result = new Result();
+        result.setStatus(status);
+        return result;
+    }
+
 
     public Result<T> setCode(int code) {
         this.code = code;

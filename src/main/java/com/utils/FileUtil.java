@@ -120,7 +120,7 @@ public class FileUtil {
         List<String> readStr = new ArrayList<>();
         BufferedReader bufferedReader = null;
         try {
-            bufferedReader = new BufferedReader(new FileReader(path));
+            bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(path),"UTF-8"));
 
             String line;
             while ( (line=bufferedReader.readLine()) != null){
